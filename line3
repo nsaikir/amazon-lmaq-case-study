@@ -56,3 +56,155 @@ Use AWS Glue Job Scheduler or Step Functions to run this job daily or on data ar
 Step 3: Monitor and Validate
 Set up CloudWatch alerts for job failures or anomalies.
 Add data quality checks in the script to validate row counts or key metrics.
+
+sample code and configuration files for automating an ETL process using three popular AWS tools: AWS Lambda, AWS Step Functions, and AWS Data Pipeline. These examples focus on moving data from S3, transforming it, and loading it to Redshift—matching your Last Mile Analytics and Quality scenario.
+
+1. AWS Lambda ETL Example
+This Lambda function reads a CSV file from S3, performs a simple transformation, and loads data into Redshift using the psycopg2 library.
+
+import boto3
+import csv
+import psycopg2
+import os
+
+S3_BUCKET = os.environ['S3_BUCKET']
+REDSHIFT_HOST = os.environ['REDSHIFT_HOST']
+REDSHIFT_DB = os.environ['REDSHIFT_DB']
+REDSHIFT_USER = os.environ['REDSHIFT_USER']
+REDSHIFT_PASSWORD = os.environ['REDSHIFT_PASSWORD']
+REDSHIFT_PORT = 5439
+
+def lambda_handler(event, context):
+    s3 = boto3.client('s3')
+    key = event['Records'][0]['s3']['object']['key']
+    response = s3.get_object(Bucket=S3_BUCKET, Key=key)
+    rows = []
+    for line in response['Body'].read().decode('utf-8').splitlines():
+        row = next(csv.reader([line]))
+        # Example transformation: uppercase all columns
+        rows.append([col.upper() for col in row])
+
+    # Connect to Redshift and insert data
+    conn = psycopg2.connect(
+        host=REDSHIFT_HOST,
+        dbname=REDSHIFT_DB,
+        user=REDSHIFT_USER,
+        password=REDSHIFT_PASSWORD,
+        port=REDSHIFT_PORT
+    )
+    cur = conn.cursor()
+    for row in rows:
+        cur.execute("INSERT INTO your_table VALUES (%s, %s, %s)", row)
+    conn.commit()
+    cur.close()
+    conn.close()
+    return {'statusCode': 200, 'body': f'Processed {len(rows)} rows'}
+
+Trigger: S3 PUT event
+IAM: Lambda needs permissions for S3:GetObject and Redshift:Connect.
+
+2. AWS Step Functions ETL Orchestration
+Here’s a JSON definition for a Step Functions state machine that orchestrates Glue ETL, with error handling and notifications.
+
+{
+  "Comment": "ETL workflow for Last Mile Analytics",
+  "StartAt": "Start Glue ETL Job",
+  "States": {
+    "Start Glue ETL Job": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::glue:startJobRun.sync",
+      "Parameters": {
+        "JobName": "lmaq-glue-etl-job"
+      },
+      "Next": "Success Notification",
+      "Catch": [
+        {
+          "ErrorEquals": ["States.ALL"],
+          "Next": "Failure Notification"
+        }
+      ]
+    },
+    "Success Notification": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Parameters": {
+        "TopicArn": "arn:aws:sns:us-east-1:123456789012:lmaq-notifications",
+        "Message": "ETL Job succeeded."
+      },
+      "End": true
+    },
+    "Failure Notification": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Parameters": {
+        "TopicArn": "arn:aws:sns:us-east-1:123456789012:lmaq-notifications",
+        "Message": "ETL Job failed."
+      },
+      "End": true
+    }
+  }
+}
+
+How to use:
+Create a Glue ETL job named lmaq-glue-etl-job.
+Replace ARNs with your own resources.
+
+3. AWS Data Pipeline ETL Example
+A simple Data Pipeline JSON definition to move data from S3 to Redshift nightly.
+
+{
+  "objects": [
+    {
+      "id": "Default",
+      "name": "Default",
+      "fields": [
+        {"key": "scheduleType", "stringValue": "cron"}
+      ]
+    },
+    {
+      "id": "Schedule",
+      "type": "Schedule",
+      "fields": [
+        {"key": "startDateTime", "stringValue": "2025-06-10T00:00:00"},
+        {"key": "period", "stringValue": "1 day"}
+      ]
+    },
+    {
+      "id": "S3Input",
+      "type": "S3DataNode",
+      "fields": [
+        {"key": "directoryPath", "stringValue": "s3://your-bucket/input/"}
+      ]
+    },
+    {
+      "id": "RedshiftTable",
+      "type": "RedshiftDataNode",
+      "fields": [
+        {"key": "tableName", "stringValue": "your_table"},
+        {"key": "database", "stringValue": "your_db"}
+      ]
+    },
+    {
+      "id": "RedshiftCopyActivity",
+      "type": "RedshiftCopyActivity",
+      "fields": [
+        {"key": "input", "refValue": "S3Input"},
+        {"key": "output", "refValue": "RedshiftTable"},
+        {"key": "schedule", "refValue": "Schedule"},
+        {"key": "runsOn", "refValue": "Ec2Resource"},
+        {"key": "copyOptions", "stringValue": "csv"}
+      ]
+    },
+    {
+      "id": "Ec2Resource",
+      "type": "Ec2Resource",
+      "fields": [
+        {"key": "instanceType", "stringValue": "m5.large"}
+      ]
+    }
+  ]
+}
+
+How to use:
+Upload this to AWS Data Pipeline as a pipeline definition.
+Set S3 and Redshift details as per your environment.
