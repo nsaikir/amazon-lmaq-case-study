@@ -1,0 +1,81 @@
+Below are sample scenarios and example analyses for the responsibility:
+"Analyze complex business problems and develop data-driven solutions using SQL, Python, or R"
+These examples are tailored for the Last Mile Analytics & Quality context at Amazon.
+
+Sample Scenario 1: Route Delay Analysis
+Business Problem
+Delivery routes experience frequent delays, impacting customer satisfaction. The goal is to identify the root causes of delays using historical delivery data.
+
+Data Sources
+Delivery route logs (timestamps, locations, driver IDs)
+Traffic data
+Weather data
+
+Sample Solution (SQL + Python)
+SQL Example: Extracting Delayed Deliveries
+
+SQL
+SELECT route_id, driver_id, scheduled_time, actual_time, 
+       (actual_time - scheduled_time) AS delay_minutes, traffic_condition, weather_condition
+FROM delivery_logs
+WHERE (actual_time - scheduled_time) > 10;
+Python Example: Analyzing and Visualizing Delays
+
+Python
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Load data from SQL query
+df = pd.read_sql(query, connection)
+
+# Analyze delay by traffic and weather conditions
+delay_summary = df.groupby(['traffic_condition', 'weather_condition'])['delay_minutes'].mean().reset_index()
+
+# Visualize
+plt.figure(figsize=(10,6))
+for traffic in delay_summary['traffic_condition'].unique():
+    subset = delay_summary[delay_summary['traffic_condition'] == traffic]
+    plt.bar(subset['weather_condition'], subset['delay_minutes'], label=traffic)
+plt.xlabel('Weather Condition')
+plt.ylabel('Average Delay (minutes)')
+plt.title('Average Delivery Delay by Traffic and Weather')
+plt.legend()
+plt.show()
+
+Business Insight:
+Delivery delays are highest during "Heavy" traffic and "Rainy" weather.
+Recommend dynamic routing or additional buffer time for such conditions.
+
+Sample Scenario 2: Identifying Inefficient Delivery Zones
+Business Problem
+Some geographic zones consistently underperform in delivery speed. Identify these zones and propose optimization strategies.
+
+Data Sources
+Delivery completion times by zone
+Zone attributes (urban/rural, distance from depot)
+
+Sample Solution (R Example)
+R
+library(dplyr)
+library(ggplot2)
+
+# Assume delivery_data is loaded with columns: zone, completion_time, zone_type, distance_to_depot
+zone_stats <- delivery_data %>%
+  group_by(zone, zone_type) %>%
+  summarise(avg_time = mean(completion_time), .groups='drop')
+
+# Visualize
+ggplot(zone_stats, aes(x=distance_to_depot, y=avg_time, color=zone_type)) +
+  geom_point() +
+  labs(title='Average Delivery Time vs Distance to Depot',
+       x='Distance to Depot (km)', y='Average Delivery Time (min)')
+
+Business Insight:
+Rural zones farthest from the depot have the slowest deliveries.
+Suggest opening micro-depots or optimizing delivery schedules for these zones.
+
+Summary of Approach:
+Define the business question clearly.
+Extract and clean relevant data using SQL.
+Use Python/R for in-depth analysis and visualization.
+Present actionable insights and recommend solutions.
