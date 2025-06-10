@@ -1,0 +1,101 @@
+# Excel Use Cases for Business Analyst, Last Mile Analytics & Quality
+
+## 1. Example Dataset
+
+Suppose you are provided with the following raw data on last-mile deliveries:
+
+| Date       | Delivery Zone | Driver Name | Orders Delivered | Delivery Time (min) | Distance (km) | Late Deliveries | Map Error Flag |
+|------------|--------------|-------------|------------------|---------------------|---------------|-----------------|----------------|
+| 2025-06-01 | Zone A       | John        | 45               | 180                 | 55            | 2               | 0              |
+| 2025-06-01 | Zone B       | Alice       | 50               | 200                 | 70            | 0               | 1              |
+| 2025-06-01 | Zone A       | Bob         | 42               | 190                 | 60            | 1               | 0              |
+| 2025-06-02 | Zone B       | Alice       | 54               | 210                 | 75            | 0               | 1              |
+| 2025-06-02 | Zone A       | John        | 48               | 170                 | 52            | 3               | 0              |
+| ...        | ...          | ...         | ...              | ...                 | ...           | ...             | ...            |
+
+## 2. Data Manipulation in Excel
+
+- **Data Cleaning**: Remove duplicates, filter out erroneous records (e.g., negative distances or delivery times).
+- **Calculated Columns**: Create new columns, e.g., _On-Time Percentage_:
+    ```
+    =1 - ([Late Deliveries] / [Orders Delivered])
+    ```
+- **Conditional Formatting**: Highlight rows where Map Error Flag = 1.
+
+## 3. Macros
+
+Automate repetitive tasks such as:
+
+- Importing daily delivery logs
+- Cleaning/filtering data
+- Calculating KPIs
+- Generating reports
+
+**Sample Macro (VBA code):**
+
+```vba
+Sub CleanAndHighlight()
+    Dim ws As Worksheet
+    Set ws = ActiveSheet
+
+    ' Remove duplicates based on Date, Delivery Zone, and Driver Name
+    ws.Range("A1:H1000").RemoveDuplicates Columns:=Array(1, 2, 3), Header:=xlYes
+
+    ' Highlight rows with Map Error Flag
+    Dim lastRow As Long
+    lastRow = ws.Cells(ws.Rows.Count, "A").End(xlUp).Row
+    Dim i As Long
+    For i = 2 To lastRow
+        If ws.Cells(i, 8).Value = 1 Then
+            ws.Rows(i).Interior.Color = RGB(255, 200, 200)
+        End If
+    Next i
+End Sub
+```
+
+## 4. Charts
+
+- **Column Chart**: Compare Orders Delivered per Driver/Zone.
+- **Line Chart**: Track Delivery Time trends over time.
+- **Pie Chart**: Proportion of late deliveries by zone.
+
+**Example:**
+- Select data for "Orders Delivered" per "Driver Name"
+- Insert > Column Chart
+
+## 5. Pivot Tables
+
+- **Purpose**: Summarize and analyze large datasets quickly.
+
+**Sample Pivot Table Setup:**
+
+- **Rows**: Delivery Zone
+- **Columns**: Date
+- **Values**: Sum of Orders Delivered, Avg of Delivery Time (min), Sum of Late Deliveries
+- **Filters**: Driver Name
+
+**How to Create:**
+1. Select your data table.
+2. Insert > Pivot Table.
+3. Drag and drop fields as above.
+
+**Sample Output:**
+
+| Delivery Zone | 2025-06-01 Orders | 2025-06-02 Orders | Avg Delivery Time | Late Deliveries |
+|---------------|-------------------|-------------------|------------------|-----------------|
+| Zone A        | 87                | 48                | 180              | 5               |
+| Zone B        | 50                | 54                | 205              | 0               |
+
+---
+
+## How These Are Used in the Role
+
+- **Data Cleaning and Macros**: Ensure data quality for analysis and reporting.
+- **Pivot Tables & Charts**: Identify trends, track KPIs, and present insights to stakeholders.
+- **Conditional Formatting**: Quickly flag data quality issues (e.g., map errors).
+- **Calculated Columns**: Derive new business insights (e.g., on-time performance).
+- **Automation**: Macros reduce manual workload and ensure consistency in reporting.
+
+---
+
+**These Excel features, when combined, enable the Business Analyst to efficiently process, analyze, and report on complex datasets—directly supporting Last Mile delivery network optimization and quality initiatives.**
