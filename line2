@@ -1,0 +1,24 @@
+a STAR-format example for “Handle and analyze large-scale navigation datasets, map datasets and map attributes” 
+for the Amazon Last Mile Analytics & Quality Business Analyst position:
+
+Situation:
+At my previous organization, we aimed to improve the accuracy of our last mile delivery routes, but inconsistencies 
+in our navigation and map datasets led to frequent delivery delays and suboptimal driver experiences.
+
+Task:
+I was tasked with handling and analyzing large-scale navigation datasets (over 50 million records) to identify data 
+discrepancies, optimize route mapping, and enhance overall delivery efficiency.
+
+Action:
+Leveraged SQL and Python to ingest, clean, and process multiple sources of navigation and mapping data, including GPS traces, 
+map attributes, and delivery records.
+
+Automated ETL pipelines to integrate and standardize map features like road segments, turn restrictions, and delivery points.
+
+Implemented data validation checks to identify and correct inaccurate map attributes, collaborating with engineering teams to validate changes.
+
+Created interactive dashboards in Tableau to visualize route efficiency trends and monitor the impact of data corrections.
+
+Result:
+Through these efforts, data quality issues were reduced by 35%, leading to a 12% improvement in estimated delivery time accuracy
+and a measurable increase in driver satisfaction scores. Our process became a model for other teams within the organization.
