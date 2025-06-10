@@ -1,0 +1,58 @@
+a sample scenario and code for "Run and automate ETL jobs for processing and integrating large scale datasets in AWS" relevant to the Business Analyst, Last Mile Analytics and Quality role.
+
+Sample: Run and Automate ETL Jobs in AWS
+Scenario:
+Suppose the team receives daily map and routing data files in Amazon S3. The requirement is to automate an ETL (Extract, Transform, Load) job that:
+
+Extracts new data from S3,
+Cleans and transforms the data using AWS Glue (with Python),
+Loads the cleaned data into an Amazon Redshift table for analytics.
+Step 1: Define the ETL Job in AWS Glue (Python Script Example)
+
+glue_etl_job.py
+
+import sys
+from awsglue.transforms import *
+from awsglue.utils import getResolvedOptions
+from pyspark.context import SparkContext
+from awsglue.context import GlueContext
+from awsglue.job import Job
+
+# Arguments for job name, source and target
+args = getResolvedOptions(sys.argv, ['JOB_NAME', 'SOURCE_S3_PATH', 'TARGET_REDSHIFT_TABLE', 'REDSHIFT_CONNECTION'])
+
+sc = SparkContext()
+glueContext = GlueContext(sc)
+spark = glueContext.spark_session
+job = Job(glueContext)
+job.init(args['JOB_NAME'], args)
+
+# Extract data from S3
+datasource = glueContext.create_dynamic_frame.from_options(
+    connection_type="s3",
+    connection_options={"paths": [args['SOURCE_S3_PATH']]},
+    format="csv",
+    format_options={"withHeader": True}
+)
+
+# Transform: Clean data (sample: remove rows with nulls in 'route_id')
+cleaned_data = datasource.drop_nulls(['route_id'])
+
+# (Optional) Additional transformations, e.g., data type casting, filtering, joins
+
+# Load data into Amazon Redshift
+glueContext.write_dynamic_frame.from_jdbc_conf(
+    frame=cleaned_data,
+    catalog_connection=args['REDSHIFT_CONNECTION'],
+    connection_options={"dbtable": args['TARGET_REDSHIFT_TABLE'], "database": "lmaq_analytics"},
+    redshift_tmp_dir="s3://your-glue-temp-dir/"
+)
+
+job.commit()
+
+Step 2: Schedule the Job with AWS Glue or AWS Step Functions
+Use AWS Glue Job Scheduler or Step Functions to run this job daily or on data arrival (event-based with S3 triggers).
+
+Step 3: Monitor and Validate
+Set up CloudWatch alerts for job failures or anomalies.
+Add data quality checks in the script to validate row counts or key metrics.
